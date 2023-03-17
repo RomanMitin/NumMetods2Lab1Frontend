@@ -145,7 +145,8 @@ namespace NumMetods2Lab1Frontend
                 FileName = "D:\\Code\\NumMetods2Lab1Backend\\x64\\Release\\Project9.exe",
                 Arguments = "D:\\Code\\NumMetods2Lab1Backend\\Project9\\list.json " +
                 "D:\\Code\\NumMetods2Lab1Backend\\Project9\\Table_1.csv " +
-                "D:\\Code\\NumMetods2Lab1Backend\\Project9\\Table_2.csv",
+                "D:\\Code\\NumMetods2Lab1Backend\\Project9\\Table_2.csv " +
+                "D:\\Code\\NumMetods2Lab1Backend\\Project9\\Directory.csv",
                 CreateNoWindow = true,
                 UseShellExecute = false
             };
@@ -184,12 +185,15 @@ namespace NumMetods2Lab1Frontend
                         throw new Exception();
                     }
                 }
+                fileReader.Close();
             }
+
             return result;
         }
 
         delegate void del1(DataGridView Table, double[,] TableData);
         delegate void del2(double[,] TableData);
+        delegate void del3(double[] v);
 
         private void BackendProcess_Exited(object sender, EventArgs e)
         {
@@ -206,7 +210,57 @@ namespace NumMetods2Lab1Frontend
             BeginInvoke(new del1(ShowTableData),
                 new object[] { Table2, Table2_data });
 
+            double[] reference = GetReference("D:\\Code\\" +
+                "NumMetods2Lab1Backend\\Project9\\Directory.csv");
+
+            BeginInvoke(new del3(ShowRerence), reference);
+
             BeginInvoke(new del2(PrintGraphics), Table1_data);
+        }
+
+        private void ShowRerence(double[] reference)
+        {
+            SplineSizeTextBox.Text = reference[0].ToString();
+            ControlSizeTextBox.Text = reference[1].ToString();
+
+            maxDiff1TextBox.Text = reference[2].ToString();
+            X1TextBox.Text = reference[3].ToString();
+
+            maxDiff2TextBox.Text = reference[4].ToString();
+            X2TextBox.Text = reference[5].ToString();
+
+            maxDiff3TextBox.Text = reference[6].ToString();
+            X3TextBox.Text = reference[7].ToString();
+        }
+
+        private double[] GetReference(string path)
+        {
+            double[] result = new double[8];
+            double value;
+            using (TextReader fileReader = File.OpenText(path))
+            {
+                CultureInfo culture = new CultureInfo("us-US");
+                var csv = new CsvReader(fileReader, culture);
+                /*csv.Configuration.HasHeaderRecord = false;*/
+                if (csv.Read())
+                {
+                    int i = 0;
+                    for (i = 0; csv.TryGetField(i, out value); i++)
+                    {
+                        result[i] = value;
+                    }
+
+                    if(i < result.GetLength(0))
+                    {
+                        throw new Exception();
+                    }
+                }
+                else
+                    throw new Exception();
+
+                fileReader.Close();
+            }
+            return result;
         }
 
         void ShowTableData(DataGridView Table, double[,] TableData)
@@ -360,18 +414,19 @@ namespace NumMetods2Lab1Frontend
                     .ToArray();
         }
 
-        delegate double del3(double x, double a, double b, double c, double d);
+        delegate double SplineFunc(double x, double a, double b, double c, double d);
 
         private Point[] GetSpline(double[] v)
         {
-            const int PointsInSpline = 10;
-
-            Point[] result = new Point[PointsInSpline];
+            const int p = 100;
 
             double x0 = v[1];
             double x1 = v[2];
 
-            del3 Spline = (double x, double a, double b, double c, double d) =>
+            int PointsInSpline = Convert.ToInt32((x1 - x0) * p) + 1;
+            Point[] result = new Point[PointsInSpline];
+
+            SplineFunc Spline = (double x, double a, double b, double c, double d) =>
             {
                 return a + b * (x - x1) 
                 + c/2 * Math.Pow((x -x1), 2) + d/6 * Math.Pow((x - x1), 3);
