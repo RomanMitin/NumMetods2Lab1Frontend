@@ -119,6 +119,9 @@ namespace NumMetods2Lab1Frontend
         {
             uint tmp;
             TryGetNumber(out tmp, NTextBox.Text);
+            if (tmp == 0)
+                tmp = 1;
+
             input.n = tmp;
             NTextBox.Text = tmp.ToString();
         }
@@ -276,19 +279,33 @@ namespace NumMetods2Lab1Frontend
             }
         }
 
+        enum FuncType
+        {
+            Func, Der1, Der2
+        }
+
         void PrintGraphics(double[,] SplinesCoeff)
         {
-            chart.Series.Clear();
+            FunctionChart.Series.Clear();
+            Derivative1Chart.Series.Clear();
+            Derivative2Chart.Series.Clear();
 
-            PrintSpline(SplinesCoeff);
-            PrintFunc();
 
-            chart.ResetAutoValues();
+            PrintSpline(SplinesCoeff, FuncType.Func);
+            PrintFunc(FuncType.Func);
+
+            PrintSpline(SplinesCoeff, FuncType.Der1);
+            PrintFunc(FuncType.Der1);
+
+            PrintSpline(SplinesCoeff, FuncType.Der2);
+            PrintFunc(FuncType.Der2);
+
+            FunctionChart.ResetAutoValues();
         }
 
         delegate double function(double x);
 
-        private void PrintFunc()
+        private void PrintFunc(FuncType opt)
         {
             const int PointsInFunc = 100;
 
@@ -304,12 +321,31 @@ namespace NumMetods2Lab1Frontend
                     {
                         if(x > 0.0)
                         {
-                            return -1 * Math.Pow(x, 3.0) + 3 * Math.Pow(x, 2.0);
+                            switch (opt)
+                            {
+                                case FuncType.Func:
+                                    return -1 * Math.Pow(x, 3.0) + 3 * Math.Pow(x, 2.0);
+                                case FuncType.Der1:
+                                    return -3 * Math.Pow(x, 2.0) + 6 * x;
+                                case FuncType.Der2:
+                                    return -6 * x + 6;
+                                default:
+                                    throw new Exception();
+                            }
                         }
                         else
                         {
-                            return Math.Pow(x, 3.0) + 3 * Math.Pow(x, 2.0);
-
+                            switch (opt)
+                            {
+                                case FuncType.Func:
+                                    return Math.Pow(x, 3.0) + 3 * Math.Pow(x, 2.0);
+                                case FuncType.Der1:
+                                    return 3 * Math.Pow(x, 2.0) + 6 * x;
+                                case FuncType.Der2:
+                                    return 6 * x + 6;
+                                default:
+                                    throw new Exception();
+                            }
                         }
                     };
                     break;
@@ -319,10 +355,26 @@ namespace NumMetods2Lab1Frontend
                     x1 = 4;
                     func = (double x) =>
                     {
-                        double result = Math.Log(x + 1) / x;
+                        double result;
+                        switch (opt)
+                        {
+                            case FuncType.Func:
+                                result = Math.Log(x + 1) / x;
+                                break;
+                            case FuncType.Der1:
+                                result = 1 / ((x + 1) * x) - Math.Log(x + 1) / (x * x);
+                                break;
+                            case FuncType.Der2:
+                                result = (2 * Math.Log(x + 1)) / Math.Pow(x, 3) -
+                                    (3 * x + 2) / ((x * x + 2 * x + 1) * x * x);
+                                break;
+                            default:
+                                throw new Exception();
+                        }
+
                         if ( input.func_id == 5)
                         {
-                            result += Math.Cos(10 * x);
+                            result += AddOscil(x, opt);
                         }
                         return result;
                     };
@@ -333,10 +385,26 @@ namespace NumMetods2Lab1Frontend
                     x1 = Math.PI;
                     func = (double x) =>
                     {
-                        double result = Math.Sin(x + 1) / x;
+                        double result = 0;
+                        switch (opt)
+                        {
+                            case FuncType.Func:
+                                result = Math.Sin(x + 1) / x;
+                                break;
+                            case FuncType.Der1:
+                                result = Math.Cos(x + 1) / x - Math.Sin(x + 1) / (x * x);
+                                break;
+                            case FuncType.Der2:
+                                result = (Math.Sin(x + 1) * (-x * x + 2) -
+                                2 * x * Math.Cos(x + 1)) / Math.Pow(x, 3);
+                                break;
+                            default:
+                                break;
+                        }
+
                         if (input.func_id == 6)
                         {
-                            result += Math.Cos(10 * x);
+                            result += AddOscil(x, opt);
                         }
                         return result;
                     };
@@ -347,10 +415,25 @@ namespace NumMetods2Lab1Frontend
                     x1 = Math.PI;
                     func = (double x) =>
                     {
-                        double result = Math.Pow(Math.Sin(x), 2) / x;
+                        double result = 0;
+                        switch (opt)
+                        {
+                            case FuncType.Func:
+                                result = Math.Pow(Math.Sin(x), 2) / x;
+                                break;
+                            case FuncType.Der1:
+                                result = Math.Sin(2 * x) / x - Math.Pow(Math.Sin(x), 2) / (x * x);
+                                break;
+                            case FuncType.Der2:
+                                result = (2 * x * x * Math.Cos(2 * x)
+                                - 2 * x * Math.Sin(2 * x) + 2 * Math.Pow(Math.Sin(x), 2)) / Math.Pow(x, 3);
+                                break;
+                            default:
+                                break;
+                        }
                         if (input.func_id == 7)
                         {
-                            result += Math.Cos(10 * x);
+                            result += AddOscil(x, opt);
                         }
                         return result;
                     };
@@ -361,10 +444,25 @@ namespace NumMetods2Lab1Frontend
                     x1 = Math.PI;
                     func = (double x) =>
                     {
-                        double result = x * Math.Sin(x) / 3;
+                        double result = 0;
+                        switch (opt)
+                        {
+                            case FuncType.Func:
+                                result = x * Math.Sin(x) / 3;
+                                break;
+                            case FuncType.Der1:
+                                result = Math.Sin(x) / 3 + x * Math.Cos(x) / 3;
+                                break;
+                            case FuncType.Der2:
+                                result = (2 * Math.Cos(x) - x * Math.Sin(x)) / 3;
+                                break;
+                            default:
+                                break;
+                        }
+
                         if (input.func_id == 8)
                         {
-                            result += Math.Cos(10 * x);
+                            result += AddOscil(x, opt);
                         }
                         return result;
                     };
@@ -384,10 +482,44 @@ namespace NumMetods2Lab1Frontend
                 FuncSeries.Points.AddXY(x0, func(x0));
                 x0 += step;
             }
-            chart.Series.Add(FuncSeries);
+            switch (opt)
+            {
+                case FuncType.Func:
+                    FunctionChart.Series.Add(FuncSeries);
+                    break;
+                case FuncType.Der1:
+                    Derivative1Chart.Series.Add(FuncSeries);
+                    break;
+                case FuncType.Der2:
+                    Derivative2Chart.Series.Add(FuncSeries);
+                    break;
+                default:
+                    break;
+            }
         }
 
-        private void PrintSpline(double[,] SplinesCoeff)
+        private double AddOscil(double x, FuncType opt)
+        {
+            double result = 0;
+            switch (opt)
+            {
+                case FuncType.Func:
+                    result += Math.Cos(10 * x);
+                    break;
+                case FuncType.Der1:
+                    result += -10 * Math.Sin(10 * x);
+                    break;
+                case FuncType.Der2:
+                    result += -100 * Math.Cos(10 * x);
+                    break;
+                default:
+                    break;
+            }
+
+            return result;
+        }
+
+        private void PrintSpline(double[,] SplinesCoeff, FuncType opt)
         {
             Series series = new Series("Spline approximation");
 
@@ -396,7 +528,7 @@ namespace NumMetods2Lab1Frontend
 
             for (int i = 0; i < SplinesCoeff.GetLength(0); i++)
             {
-                Point[] Points = GetSpline(GetRow(SplinesCoeff, i));
+                Point[] Points = GetSpline(GetRow(SplinesCoeff, i), opt);
 
                 foreach (var point in Points)
                 {
@@ -404,7 +536,20 @@ namespace NumMetods2Lab1Frontend
                 }
             }
 
-            chart.Series.Add(series);
+            switch (opt)
+            {
+                case FuncType.Func:
+                    FunctionChart.Series.Add(series);
+                    break;
+                case FuncType.Der1:
+                    Derivative1Chart.Series.Add(series);
+                    break;
+                case FuncType.Der2:
+                    Derivative2Chart.Series.Add(series);
+                    break;
+                default:
+                    break;
+            }
         }
 
         public T[] GetRow<T>(T[,] matrix, int rowNumber)
@@ -416,7 +561,7 @@ namespace NumMetods2Lab1Frontend
 
         delegate double SplineFunc(double x, double a, double b, double c, double d);
 
-        private Point[] GetSpline(double[] v)
+        private Point[] GetSpline(double[] v, FuncType opt)
         {
             const int p = 100;
 
@@ -428,8 +573,19 @@ namespace NumMetods2Lab1Frontend
 
             SplineFunc Spline = (double x, double a, double b, double c, double d) =>
             {
-                return a + b * (x - x1) 
-                + c/2 * Math.Pow((x -x1), 2) + d/6 * Math.Pow((x - x1), 3);
+                switch (opt)
+                {
+                    case FuncType.Func:
+                        return a + b * (x - x1) +
+                            c / 2 * Math.Pow((x - x1), 2) + d / 6 * Math.Pow((x - x1), 3);
+                    case FuncType.Der1:
+                        return b + c * (x - x1) + d / 2 * Math.Pow((x - x1), 2);
+                    case FuncType.Der2:
+                        return c + d * (x - x1);
+                    default:
+                        throw new Exception();
+                }
+                
             };
 
             double xCur = x0;
